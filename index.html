@@ -122,7 +122,7 @@ table{border-collapse:collapse;font-size:13.5px;margin-top:8px}td,th{padding:3px
 details{font-size:14px}summary{cursor:pointer;color:var(--gold)}
 .resumen{font-size:17px;margin:8px 0 12px}.comp{margin-bottom:12px}.compT{display:flex;justify-content:space-between;font-size:15px}.comp small{display:block;color:var(--mute);margin-top:4px;font-size:13.5px}
 .sub{display:block;margin-top:6px;color:var(--gold)}.sig{margin:10px 0 0;font-size:15px}.sig b{color:var(--gold)}
-#reporte ul{font-size:14.5px}
+#reporte ul,#acuerdo ul{font-size:15px}.acuerdoFin{border-color:var(--gold)}
 [hidden]{display:none!important}
 @media (max-width:640px){h1{font-size:54px}.rules,.grid,.room{grid-template-columns:1fr}.meters{grid-template-columns:1fr 1fr}.person{padding:8px}.avatar{width:62px;height:62px}.entrada{grid-template-columns:1fr}.scene{max-height:230px}}
 </style>
@@ -183,6 +183,7 @@ details{font-size:14px}summary{cursor:pointer;color:var(--gold)}
 <div class="result"><h2 id="finTitulo"></h2><div class="score" id="finScore"></div><p class="note">puntos de mediación</p><p id="finTexto"></p></div>
 <div class="grid">
 <div class="card ancho"><b>Línea de tiempo emocional</b><div id="tiempo"></div><div class="leyenda" id="leyenda"></div><details><summary>Ver tabla</summary><table id="tablaTiempo"></table></details></div>
+<div class="card ancho acuerdoFin"><b>Acuerdo de la sesión</b><div id="acuerdo"></div></div>
 <div class="card"><b>Reporte de competencias</b><div id="reporte"></div></div>
 <div class="card"><b>Mejores mediadores</b><ol id="tabla"><li>Cargando…</li></ol>
 <form class="form" id="guardar"><input id="alias" maxlength="20" placeholder="Tu alias" aria-label="Alias" required><button>Guardar</button></form>
@@ -299,7 +300,7 @@ $('leyenda').innerHTML=SER.map(([,nom,col])=>'<span><i style="background:'+col+'
 $('tablaTiempo').innerHTML='<tr><th>Turno</th><th>Elena</th><th>Andrés</th><th>Tensión</th></tr>'+s.map((p,i)=>'<tr><td>'+(i||'Inicio')+'</td><td>'+p.m+'</td><td>'+p.t+'</td><td>'+p.tension+'</td></tr>').join('');
 }
 async function cargarReporte(titulo){
-const c=$('reporte');c.innerHTML='<p class="note">La persona evaluadora revisa tu sesión…</p>';
+const c=$('reporte'),ac2=$('acuerdo');c.innerHTML='<p class="note">La persona evaluadora revisa tu sesión…</p>';ac2.innerHTML='<p class="note">Revisando qué acordaron las partes…</p>';
 try{
 if(e.trans.length<3)throw 0;
 const r=await fetch(SUPABASE_URL+'/functions/v1/reporte',{method:'POST',headers:{'Content-Type':'application/json',apikey:SUPABASE_KEY},body:JSON.stringify({transcripcion:e.trans.join('\n'),final:titulo})});
@@ -308,9 +309,14 @@ c.innerHTML='';
 const res=document.createElement('p');res.className='resumen';res.textContent=d.resumen||'';c.appendChild(res);
 d.competencias.slice(0,5).forEach(k=>{const v=lim(Number(k.puntos)||0),w=document.createElement('div');w.className='comp';const t=document.createElement('div');t.className='compT';const a=document.createElement('b');a.textContent=k.nombre;const b=document.createElement('span');b.textContent=v;t.append(a,b);const bar=document.createElement('div');bar.className='track';const i=document.createElement('i');i.style.width=v+'%';bar.appendChild(i);const m=document.createElement('small');m.textContent=k.comentario||'';w.append(t,bar,m);c.appendChild(w);});
 if(Array.isArray(d.momentos)&&d.momentos.length){const h=document.createElement('b');h.className='sub';h.textContent='Momentos clave';c.appendChild(h);const u=document.createElement('ul');d.momentos.slice(0,3).forEach(x=>{const li=document.createElement('li');li.textContent=(x.tipo==='riesgo'?'△ ':'✓ ')+x.texto;u.appendChild(li);});c.appendChild(u);}
+pintaAcuerdo(d.acuerdo);
 if(d.siguiente){const h=document.createElement('p');h.className='sig';const b=document.createElement('b');b.textContent='Para tu siguiente sesión: ';h.append(b,d.siguiente);c.appendChild(h);}
-}catch{c.innerHTML='<p class="note">No se pudo generar el reporte en este momento.</p>';}
+}catch{c.innerHTML='<p class="note">No se pudo generar el reporte en este momento.</p>';ac2.innerHTML='<p class="note">No se pudo revisar el acuerdo en este momento.</p>';}
 }
+function pintaAcuerdo(a){const c=$('acuerdo');c.innerHTML='';const lista=(t,arr)=>{if(!Array.isArray(arr)||!arr.length)return;const b=document.createElement('b');b.className='sub';b.textContent=t;const u=document.createElement('ul');arr.slice(0,8).forEach(x=>{const li=document.createElement('li');li.textContent=x;u.appendChild(li);});c.append(b,u);};
+const p=document.createElement('p');p.className='resumen';p.textContent=a&&a.hay?'Elena y Andrés aceptaron lo siguiente. El acuerdo es de las partes, no una condición para que la mediación haya valido la pena.':'No hubo acuerdo, y eso también puede ser un buen resultado: en un conflicto familiar, recuperar el diálogo ya es un avance.';c.appendChild(p);
+if(a&&a.hay)lista('Acuerdos',a.puntos);lista('Por resolver antes de formalizar',a&&a.pendientes);
+const n=document.createElement('p');n.className='note';n.textContent='Ejemplo ficticio con fines educativos. No es un convenio con efectos legales.';c.appendChild(n);}
 function fin(tipo){
 const f=FINALES[tipo];let p=Math.round(e.m*.2+e.t*.2+e.i*.25+e.l*.25+e.a*.1);if(tipo==='roto')p=Math.min(p,39);if(tipo==='riesgo')p=Math.min(p,59);if(tipo==='abierta')p=Math.min(p,69);
 e.p=p;$('finTitulo').textContent=f.t;$('finTexto').textContent=f.x;$('finScore').textContent=p;
