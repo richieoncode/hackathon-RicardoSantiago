@@ -123,6 +123,7 @@ table{border-collapse:collapse;font-size:13.5px;margin-top:8px}td,th{padding:3px
 details{font-size:14px}summary{cursor:pointer;color:var(--gold)}
 .resumen{font-size:17px;margin:8px 0 12px}.comp{margin-bottom:12px}.compT{display:flex;justify-content:space-between;font-size:15px}.comp small{display:block;color:var(--mute);margin-top:4px;font-size:13.5px}
 .sub{display:block;margin-top:6px;color:var(--gold)}.sig{margin:10px 0 0;font-size:15px}.sig b{color:var(--gold)}
+.sala{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:9px;font-size:14px;color:var(--mute)}.sala button{padding:6px 12px;font-size:14px}.sala button.on{border-color:var(--gold);color:var(--gold)}.person.fuera{opacity:.3}
 #reporte ul,#acuerdo ul{font-size:15px}.acuerdoFin{border-color:var(--gold)}
 [hidden]{display:none!important}
 @media (max-width:640px){h1{font-size:54px}.rules,.grid,.room{grid-template-columns:1fr}.meters{grid-template-columns:1fr 1fr}.person{padding:8px}.avatar{width:62px;height:62px}.entrada{grid-template-columns:1fr}.scene{max-height:230px}}
@@ -169,6 +170,7 @@ details{font-size:14px}summary{cursor:pointer;color:var(--gold)}
 <textarea id="texto" rows="2" maxlength="2000" placeholder="Di o escribe tu intervención…" aria-label="Tu intervención"></textarea>
 <button class="primary" id="enviar">Enviar</button>
 </div>
+<div class="sala" role="group" aria-label="Tipo de sesión"><span>Sesión:</span><button data-s="" class="on">Conjunta</button><button data-s="elena">Privada con Elena</button><button data-s="andres">Privada con Andrés</button></div>
 <div class="estado" id="estadoJuego"></div>
 </div>
 <aside class="ruta" aria-label="Ruta de la mediación">
@@ -216,13 +218,14 @@ const PASOS=['Discurso inicial','Narrativas de las partes','Intereses y necesida
 const LISTA={presentacion:'Te presentas',partes:'Presentación de las partes',proceso:'Explicas el proceso',voluntariedad:'Voluntariedad',confidencialidad:'Confidencialidad',imparcialidad:'Imparcialidad',reglas:'Reglas de respeto'};
 const FRASES={presentacion:'Buenas tardes. Soy su persona facilitadora y agradezco que estén aquí.',partes:'Antes de empezar, les pido que cada uno se presente.',proceso:'Este es un espacio para hablar, escucharse y buscar opciones. No soy juez ni decidiré por ustedes.',voluntariedad:'Participar es voluntario: pueden retirarse cuando lo decidan.',confidencialidad:'Lo que aquí se diga es confidencial, salvo las excepciones de la ley.',imparcialidad:'Soy imparcial: no represento a nadie ni les daré asesoría.',reglas:'Les pido respeto y turnos, sin interrupciones. ¿Están de acuerdo?'};
 const LEY={1:'Voluntariedad e imparcialidad: LGMASC, art. 6, fr. XIII y IX. Explicar alcances: art. 30, fr. IX. Confidencialidad: ley de Nuevo León, art. 37, fr. IV.',2:'Sin favoritismos ni preferencias: LGMASC, art. 6, fr. IX.',3:'Las partes autorregulan sus intereses, sin coacción: LGMASC, art. 6, fr. II.',4:'Las soluciones son de las partes. No asesores a una sola: LGMASC, art. 36.',5:'Vigila derechos irrenunciables, de terceros y orden público: LGMASC, arts. 30, fr. VII, y 79.',6:'Obligaciones, forma, tiempo y efectos del incumplimiento: LGMASC, art. 94. Cosa juzgada al registrarse: art. 98.'};
+function ponerSala(s){if(!e||ocupado)return;e.sala=s;document.querySelectorAll('.sala button').forEach(b=>b.classList.toggle('on',b.dataset.s===s));$('pM').classList.toggle('fuera',s==='andres');$('pT').classList.toggle('fuera',s==='elena');$('estadoJuego').textContent=s?'Sesión privada con '+(s==='elena'?'Elena':'Andrés')+'. La otra parte no escucha.':'Sesión conjunta.';pintaRuta();}
 function textoGuion(){const faltan=Object.keys(FRASES).filter(k=>!e.lista.has(k));return e.etapa===1&&faltan.length?faltan.map(k=>FRASES[k]):[e.guion||'Escucha lo que dijeron y haz una pregunta abierta a cada parte.'];}
 function pintaGuion(){const t=textoGuion(),g=$('guionTexto');g.innerHTML='';t.forEach(x=>{const p=document.createElement('p');p.textContent=x;g.appendChild(p);});const faltan=Object.keys(FRASES).length-e.lista.size;$('guionEtapa').textContent=e.etapa===1&&faltan?'Discurso inicial · '+faltan+' por decir':PASOS[e.etapa-1]+' · según lo último que dijeron';}
 function pintaRuta(){
 $('pasos').innerHTML='';PASOS.forEach((t,n)=>{const li=document.createElement('li');const num=n+1;li.className=num===e.etapa?'actual':num<e.etapa?'hecho':'';const i=document.createElement('i');i.textContent=num<e.etapa?'✓':num;li.append(i,t);$('pasos').appendChild(li);});
 $('lista').innerHTML='';Object.entries(LISTA).forEach(([k,t])=>{const li=document.createElement('li');li.textContent=t;if(e.lista.has(k))li.className='hecho';$('lista').appendChild(li);});
 $('apertura').hidden=e.etapa>2&&e.lista.size===Object.keys(LISTA).length;
-$('sugerencia').textContent=e.sugerencia;$('ley').textContent=LEY[e.etapa];pintaEmocion();pintaGuion();}
+$('sugerencia').textContent=e.sugerencia;$('ley').textContent=e.sala?'Lo dicho en privado es confidencial: ley de Nuevo León, art. 37, fr. IV.':LEY[e.etapa];pintaEmocion();pintaGuion();}
 function pinta(){[['M',e.m],['T',e.t],['I',e.i],['L',e.l],['A',e.a]].forEach(([k,v])=>{$('v'+k).textContent=v;$('b'+k).style.width=v+'%';});$('etapa').textContent='Turno '+Math.min(e.turno+1,MAX_TURNOS)+' de '+MAX_TURNOS;
 const dif=e.m-e.t,g=Math.max(-14,Math.min(14,dif*.4));$('brazo').style.transform='rotate('+(-g)+'deg)';document.querySelectorAll('.plato').forEach(p=>p.style.transform='rotate('+g+'deg)');
 $('balanzaTexto').textContent=Math.abs(dif)<8?'En equilibrio':dif>0?'Se inclina a Elena':'Se inclina a Andrés';pintaRuta();}
@@ -254,7 +257,7 @@ function linea(tipo,nombre,texto){const p=document.createElement('p');p.classNam
 async function intervenir(l,src){habla(l.p);linea(l.p,l.p==='elena'?'Elena':'Andrés',l.x);await reproducir(src);habla('');}
 function bloquear(v,msg){ocupado=v;['hablar','enviar','texto'].forEach(i=>$(i).disabled=v);$('estadoJuego').textContent=msg||'';}
 async function inicio(){
-e={m:50,t:50,i:70,l:70,a:0,turno:0,hist:[],notas:[],trans:[],series:[],p:0,etapa:1,lista:new Set(),emo:{elena:'enojo',andres:'defensiva'},tension:75,sugerencia:'Abre con tu discurso inicial: preséntate, pide a las partes presentarse y explica cómo funciona la mediación.'};pinta();$('dialogo').innerHTML='';$('nota').textContent='Aquí verás cómo evalúa la sala cada intervención.';$('texto').value='';vista('juego');bloquear(true,'');
+e={m:50,t:50,i:70,l:70,a:0,turno:0,hist:[],notas:[],trans:[],series:[],p:0,etapa:1,sala:'',lista:new Set(),emo:{elena:'enojo',andres:'defensiva'},tension:75,sugerencia:'Abre con tu discurso inicial: preséntate, pide a las partes presentarse y explica cómo funciona la mediación.'};pinta();$('dialogo').innerHTML='';$('nota').textContent='Aquí verás cómo evalúa la sala cada intervención.';$('texto').value='';ponerSala('');vista('juego');bloquear(true,'');
 e.hist.push({r:'user',t:'Inicia la sesión.'},{r:'model',t:JSON.stringify({intervenciones:INTRO.map(({p,x})=>({p,x}))})});
 e.series.push({m:e.m,t:e.t,tension:e.tension});INTRO.forEach(l=>e.trans.push((l.p==='elena'?'Elena: ':'Andrés: ')+l.x));
 for(const l of INTRO)await intervenir(l,AUDIO_BASE+l.src);
@@ -265,17 +268,18 @@ const m=$('texto').value.trim().slice(0,2000);if(!m||ocupado)return;
 
 const miLinea=linea('tu','Tú',m);$('texto').value='';bloquear(true,'Elena y Andrés te escuchan…');
 try{
-const r=await fetch(SUPABASE_URL+'/functions/v1/mediar',{method:'POST',headers:{'Content-Type':'application/json',apikey:SUPABASE_KEY},body:JSON.stringify({historial:e.hist.slice(-30),mensaje:m,conVoz:sonido})});
+const r=await fetch(SUPABASE_URL+'/functions/v1/mediar',{method:'POST',headers:{'Content-Type':'application/json',apikey:SUPABASE_KEY},body:JSON.stringify({historial:e.hist.slice(-30),mensaje:(e.sala?'[SESIÓN PRIVADA CON '+(e.sala==='elena'?'ELENA':'ANDRÉS')+'. La otra parte no está presente y no escucha.] ':'')+m,conVoz:sonido})});
 const d=await r.json();
 if(!r.ok||d.error)throw new Error(d.error==='limite'?'La sala alcanzó su límite de hoy.':'Los personajes no respondieron. Intenta de nuevo.');
-const dicho=d.corregido||m;miLinea.textContent=dicho;
+const dicho=(d.corregido||m).replace(/^\s*(MEDIADOR:\s*)?\[.*?\]\s*/,'');miLinea.textContent=dicho;
 const c=d.cambios||{},n=k=>Math.max(-25,Math.min(25,Number(c[k])||0));
 e.m=lim(e.m+n('m'));e.t=lim(e.t+n('t'));e.i=lim(e.i+n('i'));e.l=lim(e.l+n('l'));e.a=lim(e.a+Math.max(0,n('a')));e.turno++;
 const et=Number(d.etapa);if(et>=1&&et<=6)e.etapa=Math.max(e.etapa,et);(Array.isArray(d.cumplidos)?d.cumplidos:[]).forEach(k=>{if(LISTA[k])e.lista.add(k);});if(d.sugerencia)e.sugerencia=d.sugerencia;if(d.guion)e.guion=d.guion;pinta();
 if(d.nota){e.notas.push(d.nota);$('nota').textContent=d.nota;}
-e.hist.push({r:'user',t:'MEDIADOR: '+dicho},{r:'model',t:JSON.stringify({intervenciones:d.intervenciones.map(({p,x,e})=>({p,x,e}))})});
+const privado=e.sala?' (privado con '+(e.sala==='elena'?'Elena':'Andrés')+')':'';
+e.hist.push({r:'user',t:'MEDIADOR'+privado+': '+dicho},{r:'model',t:JSON.stringify({intervenciones:d.intervenciones.map(({p,x,e})=>({p,x,e}))})});
 $('estadoJuego').textContent='';if(d.tension)e.tension=d.tension;
-e.series.push({m:e.m,t:e.t,tension:e.tension});e.trans.push('Mediador: '+dicho);d.intervenciones.forEach(l=>e.trans.push((l.p==='elena'?'Elena: ':'Andrés: ')+l.x));
+e.series.push({m:e.m,t:e.t,tension:e.tension});e.trans.push('Mediador'+privado+': '+dicho);d.intervenciones.forEach(l=>e.trans.push((l.p==='elena'?'Elena: ':'Andrés: ')+l.x));
 if(d.audioMediador)await reproducir('data:audio/mpeg;base64,'+d.audioMediador);
 for(const l of d.intervenciones){if(l.e)e.emo[l.p]=l.e;pintaEmocion();await intervenir(l,l.audio?'data:audio/mpeg;base64,'+l.audio:null);}
 if(d.emociones){if(d.emociones.elena)e.emo.elena=d.emociones.elena;if(d.emociones.andres)e.emo.andres=d.emociones.andres;}pintaEmocion();
@@ -354,6 +358,7 @@ g.start();
 }catch{$('estadoJuego').textContent='Permite el micrófono, o escribe tu intervención.';}
 }
 $('hablar').onclick=microfono;
+document.querySelectorAll('.sala button').forEach(b=>b.onclick=()=>ponerSala(b.dataset.s));
 $('terminar').onclick=()=>{if(!ocupado&&e)fin('abierta');};
 $('usarGuion').onclick=()=>{$('texto').value=textoGuion().join(' ');$('texto').focus();};
 $('enviar').onclick=enviar;
