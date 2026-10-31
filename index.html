@@ -107,6 +107,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;background:ra
 .sugerencia{background:var(--panel2);border-left:3px solid var(--gold);border-radius:6px;padding:10px 12px;margin-bottom:12px}
 .sugerencia b{display:block;color:var(--gold);font-size:13px}
 .sugerencia p{margin:0;font-size:14.5px}
+.ley{border-left:3px solid var(--good);padding:2px 0 2px 12px;margin-bottom:12px}.ley b{display:block;color:var(--good);font-size:13px}.ley p{margin:0;font-size:14px}
 .apertura b{font-size:13px;color:var(--mute)}
 .apertura ul{list-style:none;margin:6px 0 0;padding:0;font-size:14px}
 .apertura li{color:var(--mute);padding:2px 0}
@@ -174,6 +175,7 @@ details{font-size:14px}summary{cursor:pointer;color:var(--gold)}
 <h2>Ruta de la mediación</h2>
 <ol id="pasos"></ol>
 <div class="sugerencia"><b>Sugerencia</b><p id="sugerencia"></p></div>
+<div class="ley"><b>Qué dice la ley</b><p id="ley"></p></div>
 <div class="apertura" id="apertura"><b>Discurso inicial</b><ul id="lista"></ul></div>
 </aside>
 </div>
@@ -213,13 +215,14 @@ const lim=v=>Math.max(0,Math.min(100,Math.round(v)));
 const PASOS=['Discurso inicial','Narrativas de las partes','Intereses y necesidades','Generar opciones','Límites legales','Cierre y consentimiento'];
 const LISTA={presentacion:'Te presentas',partes:'Presentación de las partes',proceso:'Explicas el proceso',voluntariedad:'Voluntariedad',confidencialidad:'Confidencialidad',imparcialidad:'Imparcialidad',reglas:'Reglas de respeto'};
 const FRASES={presentacion:'Buenas tardes. Soy su persona facilitadora y agradezco que estén aquí.',partes:'Antes de empezar, les pido que cada uno se presente.',proceso:'Este es un espacio para hablar, escucharse y buscar opciones. No soy juez ni decidiré por ustedes.',voluntariedad:'Participar es voluntario: pueden retirarse cuando lo decidan.',confidencialidad:'Lo que aquí se diga es confidencial, salvo las excepciones de la ley.',imparcialidad:'Soy imparcial: no represento a nadie ni les daré asesoría.',reglas:'Les pido respeto y turnos, sin interrupciones. ¿Están de acuerdo?'};
+const LEY={1:'Voluntariedad e imparcialidad: LGMASC, art. 6, fr. XIII y IX. Explicar alcances: art. 30, fr. IX. Confidencialidad: ley de Nuevo León, art. 37, fr. IV.',2:'Sin favoritismos ni preferencias: LGMASC, art. 6, fr. IX.',3:'Las partes autorregulan sus intereses, sin coacción: LGMASC, art. 6, fr. II.',4:'Las soluciones son de las partes. No asesores a una sola: LGMASC, art. 36.',5:'Vigila derechos irrenunciables, de terceros y orden público: LGMASC, arts. 30, fr. VII, y 79.',6:'Obligaciones, forma, tiempo y efectos del incumplimiento: LGMASC, art. 94. Cosa juzgada al registrarse: art. 98.'};
 function textoGuion(){const faltan=Object.keys(FRASES).filter(k=>!e.lista.has(k));return e.etapa===1&&faltan.length?faltan.map(k=>FRASES[k]):[e.guion||'Escucha lo que dijeron y haz una pregunta abierta a cada parte.'];}
 function pintaGuion(){const t=textoGuion(),g=$('guionTexto');g.innerHTML='';t.forEach(x=>{const p=document.createElement('p');p.textContent=x;g.appendChild(p);});const faltan=Object.keys(FRASES).length-e.lista.size;$('guionEtapa').textContent=e.etapa===1&&faltan?'Discurso inicial · '+faltan+' por decir':PASOS[e.etapa-1]+' · según lo último que dijeron';}
 function pintaRuta(){
 $('pasos').innerHTML='';PASOS.forEach((t,n)=>{const li=document.createElement('li');const num=n+1;li.className=num===e.etapa?'actual':num<e.etapa?'hecho':'';const i=document.createElement('i');i.textContent=num<e.etapa?'✓':num;li.append(i,t);$('pasos').appendChild(li);});
 $('lista').innerHTML='';Object.entries(LISTA).forEach(([k,t])=>{const li=document.createElement('li');li.textContent=t;if(e.lista.has(k))li.className='hecho';$('lista').appendChild(li);});
 $('apertura').hidden=e.etapa>2&&e.lista.size===Object.keys(LISTA).length;
-$('sugerencia').textContent=e.sugerencia;pintaEmocion();pintaGuion();}
+$('sugerencia').textContent=e.sugerencia;$('ley').textContent=LEY[e.etapa];pintaEmocion();pintaGuion();}
 function pinta(){[['M',e.m],['T',e.t],['I',e.i],['L',e.l],['A',e.a]].forEach(([k,v])=>{$('v'+k).textContent=v;$('b'+k).style.width=v+'%';});$('etapa').textContent='Turno '+Math.min(e.turno+1,MAX_TURNOS)+' de '+MAX_TURNOS;
 const dif=e.m-e.t,g=Math.max(-14,Math.min(14,dif*.4));$('brazo').style.transform='rotate('+(-g)+'deg)';document.querySelectorAll('.plato').forEach(p=>p.style.transform='rotate('+g+'deg)');
 $('balanzaTexto').textContent=Math.abs(dif)<8?'En equilibrio':dif>0?'Se inclina a Elena':'Se inclina a Andrés';pintaRuta();}
