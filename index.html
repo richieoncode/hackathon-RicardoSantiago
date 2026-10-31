@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Balanza</title>
+<meta name="description" content="Simulador de mediación por voz: confianza, imparcialidad y legalidad en un conflicto de sucesión familiar.">
+<style>
+:root{--bg:#10151c;--panel:#18202a;--panel2:#212b37;--ink:#f1eee6;--mute:#a9b0ba;--line:#333e4c;--gold:#e0b65c;--elena:#e58e73;--andres:#6fb8c9;--good:#7fd19c;--bad:#f08a7d}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:radial-gradient(circle at 50% -10%,#2a3442 0,var(--bg) 60%) fixed;color:var(--ink);font:17px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+main{max-width:860px;margin:0 auto;padding:22px 16px 40px}
+h1{font-family:Georgia,"Times New Roman",serif;font-size:72px;line-height:1;margin:0}
+h2{font-family:Georgia,"Times New Roman",serif;font-size:27px;line-height:1.2;margin:0 0 8px}
+p{margin:0 0 12px}
+button{font:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:8px;cursor:pointer;padding:11px 16px}
+button:hover:not(:disabled){border-color:var(--gold)}
+button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+button:disabled{opacity:.55;cursor:default}
+.primary{background:var(--gold);color:#1a1712;border-color:var(--gold);font-weight:700;padding:13px 24px}
+.ghost{padding:6px 12px;font-size:14px;color:var(--mute);background:transparent}
+.hero{min-height:84vh;display:flex;flex-direction:column;justify-content:center}
+.lead{font-size:21px;max-width:640px;color:var(--mute);margin:14px 0 22px}
+.caso{background:var(--panel);border:1px solid var(--gold);border-radius:10px;padding:16px 18px;margin-bottom:12px}
+.caso b{color:var(--gold)}
+.rules{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 22px}
+.rule{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:15px}
+.rule b{display:block}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px}
+.brand{font-family:Georgia,serif;font-size:21px}
+.stage{color:var(--gold);font-size:14px;font-weight:600}
+.meters{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:12px}
+.meter{font-size:12.5px;color:var(--mute)}
+.meter .val{float:right;color:var(--ink);font-variant-numeric:tabular-nums}
+.track{height:7px;border-radius:4px;background:var(--panel2);margin-top:4px;overflow:hidden}
+.track i{display:block;height:100%;width:50%;background:var(--gold);transition:width .6s}
+.room{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.person{display:flex;align-items:center;gap:12px;background:var(--panel);border:2px solid var(--line);border-radius:10px;padding:10px 12px;transition:border-color .2s,transform .2s}
+.person.talk{transform:translateY(-2px)}
+.person.elena.talk{border-color:var(--elena)}.person.andres.talk{border-color:var(--andres)}
+.avatar{width:92px;height:92px;flex:none;border-radius:50%;overflow:hidden}.avatar svg{display:block;width:100%;height:100%}
+.elena .avatar{background:var(--elena)}.andres .avatar{background:var(--andres)}
+.cejas path{fill:none;stroke:#2a1d1a;stroke-width:2.4;stroke-linecap:round}.cejas,.ojos{transform-box:fill-box;transform-origin:center;transition:transform .35s}.ojos ellipse{fill:#1d1a1a}.boca{fill:#6d2e2c}
+.who small{display:block;color:var(--mute);font-size:13px;line-height:1.3}
+.who b{font-size:17px}
+.scene{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:12px;max-height:290px;overflow-y:auto}
+.line{margin:0 0 9px;padding-left:12px;border-left:3px solid var(--line)}
+.line.elena{border-color:var(--elena)}.line.andres{border-color:var(--andres)}.line.tu{border-color:var(--gold)}
+.line b{display:block;font-size:12.5px;color:var(--mute)}
+.nota{font-size:14.5px;color:var(--mute);min-height:22px;margin-bottom:10px}
+.nota b{color:var(--gold)}
+.entrada{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:stretch}
+textarea,input{font:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-width:0;width:100%;resize:none}
+#hablar{font-weight:700;min-width:110px}
+#hablar.on{background:var(--bad);border-color:var(--bad);color:#1b1311}
+.estado{font-size:14px;color:var(--mute);margin-top:7px;min-height:21px}
+.result{text-align:center;padding:24px 10px 10px}
+.score{font-family:Georgia,serif;font-size:80px;line-height:1;color:var(--gold)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.card ol,.card ul{margin:6px 0 0;padding-left:21px}
+.form{display:flex;gap:8px;margin-top:10px}
+.note{font-size:13.5px;color:var(--mute)}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 35%,transparent 45%,rgba(179,54,43,.34) 100%);opacity:var(--tension,0);transition:opacity 1s}
+.emo{display:inline-block;margin-top:5px;font-size:12.5px;font-weight:650;padding:1px 9px;border-radius:999px;background:var(--panel2)}
+.emo:empty{display:none}
+.emo.enojo{color:var(--bad)}.emo.defensiva{color:var(--elena)}.emo.tristeza{color:#a9c4ef}.emo.miedo{color:#d2b4ee}.emo.esperanza{color:var(--gold)}.emo.calma{color:var(--good)}
+.tension{color:var(--mute);font-weight:500;font-size:12.5px;margin-top:2px}
+.rubor{fill:#d8493c;opacity:0;transition:opacity .5s}
+.lagrima{fill:#a9d4f2;opacity:0;transition:opacity .5s}
+.labios{fill:none;stroke:#6d2e2c;stroke-width:2.4;stroke-linecap:round}
+.ceja{transform-box:fill-box;transform-origin:center;transition:transform .4s}
+.jugando main{max-width:1440px;position:relative}
+.layout{display:grid;grid-template-columns:280px minmax(0,1fr) 300px;gap:16px;align-items:start}
+.observacion{background:var(--panel);border:1px solid var(--gold);border-radius:10px;padding:18px;position:sticky;top:14px;min-height:300px}
+.observacion b{display:block;font-family:Georgia,serif;font-size:21px;color:var(--gold);margin-bottom:10px}
+.observacion p{margin:0;font-size:21px;line-height:1.4}
+.izquierda{display:grid;gap:12px;position:sticky;top:14px}
+.observacion{position:static;min-height:0}
+.guion{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.guion b{display:block;font-family:Georgia,serif;font-size:18px;color:var(--gold)}
+.guion small{display:block;color:var(--mute);margin-bottom:8px}
+#guionTexto p{margin:0 0 7px;font-size:15.5px;line-height:1.4}
+#usarGuion{width:100%;margin-top:6px;font-size:14.5px;font-weight:600}
+.room{grid-template-columns:1fr 210px 1fr;align-items:stretch}
+.person{flex-direction:column;text-align:center;justify-content:center;padding:14px 10px}
+.person .avatar{width:124px;height:124px;box-shadow:0 0 0 0 transparent;transition:box-shadow .25s}
+.person.talk .avatar{box-shadow:0 0 0 6px rgba(224,182,92,.35)}
+.balanza{display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--gold);font-size:13px;font-weight:600}
+.balanza svg{width:100%}
+.b-base,.b-brazo{fill:none;stroke:var(--gold);stroke-width:4;stroke-linecap:round}
+.plato path{fill:none;stroke:var(--gold);stroke-width:1.5}
+.plato .b-plato{fill:var(--panel2);stroke:var(--gold)}
+.b-eje{fill:var(--gold)}
+#brazo{transform-origin:100px 36px;transition:transform .8s cubic-bezier(.3,1.6,.5,1)}
+.plato{transition:transform .8s cubic-bezier(.3,1.6,.5,1)}
+.pE{transform-origin:34px 40px}.pA{transform-origin:166px 40px}
+.ruta{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;position:sticky;top:14px}
+.ruta h2{font-size:20px}
+.ruta ol{list-style:none;margin:0 0 14px;padding:0}
+.ruta ol li{display:flex;gap:9px;align-items:center;padding:6px 0;color:var(--mute);font-size:15px}
+.ruta ol li i{width:24px;height:24px;flex:none;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line);font-style:normal;font-size:12.5px}
+.ruta ol li.actual{color:var(--ink);font-weight:650}
+.ruta ol li.actual i{background:var(--gold);border-color:var(--gold);color:#1a1712}
+.ruta ol li.hecho i{background:var(--panel2);color:var(--good);border-color:var(--good)}
+.sugerencia{background:var(--panel2);border-left:3px solid var(--gold);border-radius:6px;padding:10px 12px;margin-bottom:12px}
+.sugerencia b{display:block;color:var(--gold);font-size:13px}
+.sugerencia p{margin:0;font-size:14.5px}
+.apertura b{font-size:13px;color:var(--mute)}
+.apertura ul{list-style:none;margin:6px 0 0;padding:0;font-size:14px}
+.apertura li{color:var(--mute);padding:2px 0}
+.apertura li::before{content:'○ '}
+.apertura li.hecho{color:var(--good)}.apertura li.hecho::before{content:'✓ '}
+.scene{max-height:240px}
+@media (max-width:1180px){.layout{grid-template-columns:1fr}.ruta,.izquierda{position:static}.izquierda{order:2}.principal{order:1}.ruta{order:3}.observacion p{font-size:18px}}
+@media (max-width:640px){.room{grid-template-columns:1fr 1fr}.balanza{grid-column:1/3;grid-row:2;max-width:170px;justify-self:center}.person .avatar{width:74px;height:74px}}
+.grid{grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr)}.ancho{grid-column:1/-1}
+#tiempo svg{width:100%;display:block;margin-top:8px}.rej{stroke:var(--line);stroke-width:1}.eje{fill:var(--mute);font-size:11px}.fin{fill:var(--ink);font-size:12px;font-weight:600}
+.leyenda{display:flex;gap:16px;flex-wrap:wrap;font-size:13.5px;color:var(--mute);margin:6px 0}.leyenda i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+table{border-collapse:collapse;font-size:13.5px;margin-top:8px}td,th{padding:3px 12px 3px 0;text-align:left;font-weight:400;color:var(--mute)}
+details{font-size:14px}summary{cursor:pointer;color:var(--gold)}
+.resumen{font-size:17px;margin:8px 0 12px}.comp{margin-bottom:12px}.compT{display:flex;justify-content:space-between;font-size:15px}.comp small{display:block;color:var(--mute);margin-top:4px;font-size:13.5px}
+.sub{display:block;margin-top:6px;color:var(--gold)}.sig{margin:10px 0 0;font-size:15px}.sig b{color:var(--gold)}
+#reporte ul{font-size:14.5px}
+[hidden]{display:none!important}
+@media (max-width:640px){h1{font-size:54px}.rules,.grid,.room{grid-template-columns:1fr}.meters{grid-template-columns:1fr 1fr}.person{padding:8px}.avatar{width:62px;height:62px}.entrada{grid-template-columns:1fr}.scene{max-height:230px}}
+</style>
+</head>
+<body>
+<main>
+<section id="inicio" class="hero">
+<h1>Balanza</h1>
+<p class="lead">Dos hermanos. Una empresa de 52 años. Tú mediando con tu propia voz.</p>
+<div class="caso"><b>Forjas Cerro de la Silla · Monterrey</b><br>Don Ernesto murió hace ocho meses, sin dejar claro quién debía sucederlo. Elena dirige la empresa. Andrés regresó de Houston con una oferta de compra.</div>
+<div class="rules">
+<div class="rule"><b>Habla con libertad</b>No hay opciones: ellos reaccionan a lo que digas.</div>
+<div class="rule"><b>Gana confianza</b>Si favoreces a alguien, se levanta de la mesa.</div>
+<div class="rule"><b>Cuida la ley</b>Imparcial no significa pasivo.</div>
+</div>
+<div><button class="primary" id="empezar">Entrar a la sala</button></div>
+<p class="note" style="margin-top:20px">Caso y personajes ficticios. Herramienta educativa, no asesoría legal. No compartas datos reales: lo que digas se procesa con servicios de IA. Personajes con Gemini; voces con ElevenLabs. Creado por Ricardo Santiago Vázquez con Claude Code para el Hackathon Lawgic.</p>
+</section>
+
+<section id="juego" hidden>
+<div class="top"><span class="brand">Balanza</span><span class="stage" id="etapa"></span><span><button class="ghost" id="terminar">Terminar sesión</button> <button class="ghost" id="sonido" aria-pressed="true">Sonido: sí</button></span></div>
+<div class="layout">
+<div class="izquierda">
+<aside class="observacion" aria-live="polite"><b>Observación</b><p id="nota">Aquí verás cómo evalúa la sala cada intervención.</p></aside>
+<aside class="guion" aria-live="polite"><b>Guion sugerido</b><small id="guionEtapa"></small><div id="guionTexto"></div><button id="usarGuion">Usar esta intervención</button></aside>
+</div>
+<div class="principal">
+<div class="meters">
+<div class="meter">Confianza Elena <span class="val" id="vM">50</span><div class="track"><i id="bM"></i></div></div>
+<div class="meter">Confianza Andrés <span class="val" id="vT">50</span><div class="track"><i id="bT"></i></div></div>
+<div class="meter">Imparcialidad <span class="val" id="vI">70</span><div class="track"><i id="bI"></i></div></div>
+<div class="meter">Legalidad <span class="val" id="vL">70</span><div class="track"><i id="bL"></i></div></div>
+<div class="meter">Avance <span class="val" id="vA">0</span><div class="track"><i id="bA"></i></div></div>
+</div>
+<div class="room">
+<div class="person elena" id="pM"><div class="avatar" id="caraE"></div><div class="who"><b>Elena</b><small>Directora, 15 años al frente</small><span class="emo" id="emoE"></span></div></div>
+<div class="balanza" aria-hidden="true"><svg viewBox="0 0 200 150"><path class="b-base" d="M100 34v92M72 132h56"/><g id="brazo"><path class="b-brazo" d="M34 40h132"/><g class="plato pE"><path d="M34 40l-20 42M34 40l20 42"/><path class="b-plato" d="M10 82h48c-3 14-45 14-48 0Z"/></g><g class="plato pA"><path d="M166 40l-20 42M166 40l20 42"/><path class="b-plato" d="M142 82h48c-3 14-45 14-48 0Z"/></g></g><circle class="b-eje" cx="100" cy="36" r="6"/></svg><span id="balanzaTexto">En equilibrio</span><span id="tensionTexto" class="tension"></span></div>
+<div class="person andres" id="pT"><div class="avatar" id="caraA"></div><div class="who"><b>Andrés</b><small>Socio, regresó de Houston</small><span class="emo" id="emoA"></span></div></div>
+</div>
+<div class="scene" id="dialogo" aria-live="polite"></div>
+<div class="entrada">
+<button id="hablar">🎙 Hablar</button>
+<textarea id="texto" rows="2" maxlength="2000" placeholder="Di o escribe tu intervención…" aria-label="Tu intervención"></textarea>
+<button class="primary" id="enviar">Enviar</button>
+</div>
+<div class="estado" id="estadoJuego"></div>
+</div>
+<aside class="ruta" aria-label="Ruta de la mediación">
+<h2>Ruta de la mediación</h2>
+<ol id="pasos"></ol>
+<div class="sugerencia"><b>Sugerencia</b><p id="sugerencia"></p></div>
+<div class="apertura" id="apertura"><b>Discurso inicial</b><ul id="lista"></ul></div>
+</aside>
+</div>
+</section>
+
+<section id="fin" hidden>
+<div class="result"><h2 id="finTitulo"></h2><div class="score" id="finScore"></div><p class="note">puntos de mediación</p><p id="finTexto"></p></div>
+<div class="grid">
+<div class="card ancho"><b>Línea de tiempo emocional</b><div id="tiempo"></div><div class="leyenda" id="leyenda"></div><details><summary>Ver tabla</summary><table id="tablaTiempo"></table></details></div>
+<div class="card"><b>Reporte de competencias</b><div id="reporte"></div></div>
+<div class="card"><b>Mejores mediadores</b><ol id="tabla"><li>Cargando…</li></ol>
+<form class="form" id="guardar"><input id="alias" maxlength="20" placeholder="Tu alias" aria-label="Alias" required><button>Guardar</button></form>
+<p class="note" id="estado">Usa un alias; no escribas tu nombre completo.</p></div>
+</div>
+<p style="text-align:center;margin-top:18px"><button class="primary" id="otra">Volver a mediar</button></p>
+</section>
+</main>
+
+<script>
+const SUPABASE_URL='https://mqauhtlcjjgcpryfuitq.supabase.co';
+const SUPABASE_KEY='sb_publishable_X5MvxNVNDP5yRpyhCeMG3g_dCLEE7Tt';
+const AUDIO_BASE=SUPABASE_URL+'/storage/v1/object/public/voces/';
+const MAX_TURNOS=12;
+const INTRO=[
+{p:'elena',x:'Mi papá me dejó esta empresa en las manos. Tengo su carta. No voy a venderla a unos extranjeros.',src:'intro-elena.mp3'},
+{p:'andres',x:'Esa carta no vale nada, Elena. Yo también soy dueño, y esta vez no me vas a dejar fuera.',src:'intro-andres.mp3'}];
+const FINALES={
+solido:{t:'Acuerdo sólido',x:'Elena y Andrés salen con un plan claro y Doña Rosa forma parte de él. Tú no ganaste un caso: ayudaste a una familia a seguir adelante.',a:'fin-solido.mp3'},
+fragil:{t:'Acuerdo frágil',x:'Hay un plan, pero queda desconfianza. La próxima decisión difícil podría romperlo.',a:'fin-fragil.mp3'},
+riesgo:{t:'Acuerdo en riesgo',x:'Las partes quedaron conformes, pero descuidaste la legalidad. Ser neutral no te libera de la ley: ese convenio podría no sostenerse.',a:'fin-riesgo.mp3'},
+roto:{t:'Se levantaron de la mesa',x:'Una de las partes dejó de confiar en ti y la mediación terminó. En esta sala, la confianza es lo único que sostiene todo.',a:'fin-roto.mp3'},
+abierta:{t:'Sesión sin cerrar',x:'La sesión terminó sin acuerdo. No siempre lo hay, y también eso es mediar.',a:'fin-fragil.mp3'}};
+const $=id=>document.getElementById(id);
+let e=null,sonido=true,audio=null,ctx=null,analizador=null,hablando='',ocupado=false,escuchando=false;
+const lim=v=>Math.max(0,Math.min(100,Math.round(v)));
+const PASOS=['Discurso inicial','Narrativas de las partes','Intereses y necesidades','Generar opciones','Límites legales','Cierre y consentimiento'];
+const LISTA={presentacion:'Te presentas',partes:'Presentación de las partes',proceso:'Explicas el proceso',voluntariedad:'Voluntariedad',confidencialidad:'Confidencialidad',imparcialidad:'Imparcialidad',reglas:'Reglas de respeto'};
+const FRASES={presentacion:'Buenas tardes. Soy su persona facilitadora y agradezco que estén aquí.',partes:'Antes de empezar, les pido que cada uno se presente.',proceso:'Este es un espacio para hablar, escucharse y buscar opciones. No soy juez ni decidiré por ustedes.',voluntariedad:'Participar es voluntario: pueden retirarse cuando lo decidan.',confidencialidad:'Lo que aquí se diga es confidencial, salvo las excepciones de la ley.',imparcialidad:'Soy imparcial: no represento a nadie ni les daré asesoría.',reglas:'Les pido respeto y turnos, sin interrupciones. ¿Están de acuerdo?'};
+function textoGuion(){const faltan=Object.keys(FRASES).filter(k=>!e.lista.has(k));return e.etapa===1&&faltan.length?faltan.map(k=>FRASES[k]):[e.guion||'Escucha lo que dijeron y haz una pregunta abierta a cada parte.'];}
+function pintaGuion(){const t=textoGuion(),g=$('guionTexto');g.innerHTML='';t.forEach(x=>{const p=document.createElement('p');p.textContent=x;g.appendChild(p);});const faltan=Object.keys(FRASES).length-e.lista.size;$('guionEtapa').textContent=e.etapa===1&&faltan?'Discurso inicial · '+faltan+' por decir':PASOS[e.etapa-1]+' · según lo último que dijeron';}
+function pintaRuta(){
+$('pasos').innerHTML='';PASOS.forEach((t,n)=>{const li=document.createElement('li');const num=n+1;li.className=num===e.etapa?'actual':num<e.etapa?'hecho':'';const i=document.createElement('i');i.textContent=num<e.etapa?'✓':num;li.append(i,t);$('pasos').appendChild(li);});
+$('lista').innerHTML='';Object.entries(LISTA).forEach(([k,t])=>{const li=document.createElement('li');li.textContent=t;if(e.lista.has(k))li.className='hecho';$('lista').appendChild(li);});
+$('apertura').hidden=e.etapa>2&&e.lista.size===Object.keys(LISTA).length;
+$('sugerencia').textContent=e.sugerencia;pintaEmocion();pintaGuion();}
+function pinta(){[['M',e.m],['T',e.t],['I',e.i],['L',e.l],['A',e.a]].forEach(([k,v])=>{$('v'+k).textContent=v;$('b'+k).style.width=v+'%';});$('etapa').textContent='Turno '+Math.min(e.turno+1,MAX_TURNOS)+' de '+MAX_TURNOS;
+const dif=e.m-e.t,g=Math.max(-14,Math.min(14,dif*.4));$('brazo').style.transform='rotate('+(-g)+'deg)';document.querySelectorAll('.plato').forEach(p=>p.style.transform='rotate('+g+'deg)');
+$('balanzaTexto').textContent=Math.abs(dif)<8?'En equilibrio':dif>0?'Se inclina a Elena':'Se inclina a Andrés';pintaRuta();}
+function vista(id){['inicio','juego','fin'].forEach(s=>$(s).hidden=s!==id);document.body.classList.toggle('jugando',id==='juego');scrollTo(0,0);}
+const GESTOS={enojo:{a:15,y:3,ojo:.8,boca:-5,rubor:.65},defensiva:{a:8,y:1,ojo:.9,boca:-2,rubor:.2},tristeza:{a:-15,y:0,ojo:.75,boca:-6,rubor:.1},miedo:{a:-10,y:-3,ojo:1.25,boca:-3,rubor:0},esperanza:{a:-3,y:-2,ojo:1,boca:5,rubor:.2},calma:{a:0,y:0,ojo:.95,boca:3,rubor:0}};
+const ETIQUETA={enojo:'Enojada',defensiva:'A la defensiva',tristeza:'Dolida',miedo:'Con miedo',esperanza:'Con esperanza',calma:'En calma'};
+function pintaEmocion(){[['elena','emoE'],['andres','emoA']].forEach(([p,id])=>{const k=e.emo[p],el=$(id);let t=ETIQUETA[k]||'';if(p==='andres')t=t.replace('Enojada','Enojado').replace('Dolida','Dolido');el.textContent=t;el.className='emo '+k;});document.body.style.setProperty('--tension',(e.tension/100).toFixed(2));$('tensionTexto').textContent=e.tension>=70?'Tensión alta':e.tension>=40?'Tensión media':'Tensión baja';}
+function cara(id,pelo,piel,mujer){
+const larga=mujer?'<path d="M16 46C12 18 28 8 50 8s38 10 34 38c2 14 0 30-6 38H22c-6-8-8-24-6-38Z" fill="'+pelo+'"/>':'';
+const corto=mujer?'<path d="M26 40c2-14 14-20 26-18 10 2 20 8 22 18-8-6-14-10-22-10-10 2-18 6-26 10Z" fill="'+pelo+'"/>':'<path d="M24 42c-2-18 12-28 28-27 16 1 26 12 24 27-6-8-14-12-26-12s-20 4-26 12Z" fill="'+pelo+'"/>';
+$(id).innerHTML='<svg viewBox="0 0 100 100" aria-hidden="true">'+larga+'<ellipse cx="50" cy="52" rx="27" ry="31" fill="'+piel+'"/>'+corto+'<ellipse class="rubor" cx="32" cy="62" rx="7" ry="4"/><ellipse class="rubor" cx="68" cy="62" rx="7" ry="4"/><g class="cejas"><path class="ceja izq" d="M33 42q6-4 12 0"/><path class="ceja der" d="M55 42q6-4 12 0"/></g><g class="ojos"><ellipse cx="39" cy="50" rx="3.4" ry="4"/><ellipse cx="61" cy="50" rx="3.4" ry="4"/></g><path class="lagrima" d="M63 55c-3 5-3 8 0 8s3-3 0-8Z"/><path d="M50 53l-2 9h4" fill="none" stroke="#00000033" stroke-width="1.6"/><path class="labios" d="M42 70q8 0 16 0"/><ellipse class="boca" cx="50" cy="70" rx="7" ry="0"/></svg>';
+}
+cara('caraE','#3b2520','#e8b998',true);cara('caraA','#1e1c1e','#d6a47e',false);
+function animar(t){
+const nivel=()=>{if(!hablando)return 0;if(analizador){const d=new Uint8Array(analizador.fftSize);analizador.getByteTimeDomainData(d);let s=0;for(const v of d)s+=Math.abs(v-128);const r=s/d.length/18;if(r>.02)return Math.min(1,r);}return .35+.35*Math.sin(t/70)*Math.sin(t/190);};
+[['elena','caraE'],['andres','caraA']].forEach(([p,id])=>{const svg=$(id).firstChild;if(!svg)return;
+const v=hablando===p?nivel():0;svg.querySelector('.boca').setAttribute('ry',v*8);
+const em=e?e.emo[p]:'defensiva',G=GESTOS[em]||GESTOS.defensiva;
+svg.querySelector('.labios').setAttribute('d','M42 '+(70-G.boca/2)+'q8 '+G.boca+' 16 0');svg.querySelector('.labios').style.opacity=v>.08?0:1;
+const d=p==='elena'?.3:0;const parp=Math.floor(t/4000+d)!==Math.floor((t+140)/4000+d);svg.querySelector('.ojos').style.transform=parp?'scaleY(.08)':'scaleY('+G.ojo+')';
+svg.querySelector('.ceja.izq').style.transform='translateY('+G.y+'px) rotate('+G.a+'deg)';svg.querySelector('.ceja.der').style.transform='translateY('+G.y+'px) rotate('+(-G.a)+'deg)';
+svg.querySelectorAll('.rubor').forEach(r=>r.style.opacity=G.rubor);svg.querySelector('.lagrima').style.opacity=em==='tristeza'?.9:0;});
+requestAnimationFrame(animar);}
+requestAnimationFrame(animar);
+function habla(p){hablando=p;$('pM').classList.toggle('talk',p==='elena');$('pT').classList.toggle('talk',p==='andres');}
+function conectar(a){try{ctx=ctx||new AudioContext();if(ctx.state==='suspended')ctx.resume();const s=ctx.createMediaElementSource(a);analizador=ctx.createAnalyser();analizador.fftSize=512;s.connect(analizador);analizador.connect(ctx.destination);}catch{analizador=null;}}
+function reproducir(src){return new Promise(ok=>{if(!sonido||!src)return setTimeout(ok,sonido?0:1200);audio=new Audio();audio.crossOrigin='anonymous';audio.src=src;conectar(audio);audio.onended=ok;audio.onerror=ok;audio.play().catch(ok);});}
+function linea(tipo,nombre,texto){const p=document.createElement('p');p.className='line '+tipo;const b=document.createElement('b');b.textContent=nombre;const s=document.createElement('span');s.textContent=texto;p.append(b,s);$('dialogo').appendChild(p);$('dialogo').scrollTop=1e6;return s;}
+async function intervenir(l,src){habla(l.p);linea(l.p,l.p==='elena'?'Elena':'Andrés',l.x);await reproducir(src);habla('');}
+function bloquear(v,msg){ocupado=v;['hablar','enviar','texto'].forEach(i=>$(i).disabled=v);$('estadoJuego').textContent=msg||'';}
+async function inicio(){
+e={m:50,t:50,i:70,l:70,a:0,turno:0,hist:[],notas:[],trans:[],series:[],p:0,etapa:1,lista:new Set(),emo:{elena:'enojo',andres:'defensiva'},tension:75,sugerencia:'Abre con tu discurso inicial: preséntate, pide a las partes presentarse y explica cómo funciona la mediación.'};pinta();$('dialogo').innerHTML='';$('nota').textContent='Aquí verás cómo evalúa la sala cada intervención.';$('texto').value='';vista('juego');bloquear(true,'');
+e.hist.push({r:'user',t:'Inicia la sesión.'},{r:'model',t:JSON.stringify({intervenciones:INTRO.map(({p,x})=>({p,x}))})});
+e.series.push({m:e.m,t:e.t,tension:e.tension});INTRO.forEach(l=>e.trans.push((l.p==='elena'?'Elena: ':'Andrés: ')+l.x));
+for(const l of INTRO)await intervenir(l,AUDIO_BASE+l.src);
+bloquear(false,'Es tu turno. Abre la sesión como mediador.');$('texto').focus();
+}
+async function enviar(){
+const m=$('texto').value.trim().slice(0,2000);if(!m||ocupado)return;
+
+const miLinea=linea('tu','Tú',m);$('texto').value='';bloquear(true,'Elena y Andrés te escuchan…');
+try{
+const r=await fetch(SUPABASE_URL+'/functions/v1/mediar',{method:'POST',headers:{'Content-Type':'application/json',apikey:SUPABASE_KEY},body:JSON.stringify({historial:e.hist.slice(-30),mensaje:m,conVoz:sonido})});
+const d=await r.json();
+if(!r.ok||d.error)throw new Error(d.error==='limite'?'La sala alcanzó su límite de hoy.':'Los personajes no respondieron. Intenta de nuevo.');
+const dicho=d.corregido||m;miLinea.textContent=dicho;
+const c=d.cambios||{},n=k=>Math.max(-25,Math.min(25,Number(c[k])||0));
+e.m=lim(e.m+n('m'));e.t=lim(e.t+n('t'));e.i=lim(e.i+n('i'));e.l=lim(e.l+n('l'));e.a=lim(e.a+Math.max(0,n('a')));e.turno++;
+const et=Number(d.etapa);if(et>=1&&et<=6)e.etapa=Math.max(e.etapa,et);(Array.isArray(d.cumplidos)?d.cumplidos:[]).forEach(k=>{if(LISTA[k])e.lista.add(k);});if(d.sugerencia)e.sugerencia=d.sugerencia;if(d.guion)e.guion=d.guion;pinta();
+if(d.nota){e.notas.push(d.nota);$('nota').textContent=d.nota;}
+e.hist.push({r:'user',t:'MEDIADOR: '+dicho},{r:'model',t:JSON.stringify({intervenciones:d.intervenciones.map(({p,x,e})=>({p,x,e}))})});
+$('estadoJuego').textContent='';if(d.tension)e.tension=d.tension;
+e.series.push({m:e.m,t:e.t,tension:e.tension});e.trans.push('Mediador: '+dicho);d.intervenciones.forEach(l=>e.trans.push((l.p==='elena'?'Elena: ':'Andrés: ')+l.x));
+if(d.audioMediador)await reproducir('data:audio/mpeg;base64,'+d.audioMediador);
+for(const l of d.intervenciones){if(l.e)e.emo[l.p]=l.e;pintaEmocion();await intervenir(l,l.audio?'data:audio/mpeg;base64,'+l.audio:null);}
+if(d.emociones){if(d.emociones.elena)e.emo.elena=d.emociones.elena;if(d.emociones.andres)e.emo.andres=d.emociones.andres;}pintaEmocion();
+if(d.fin==='roto'||e.m<15||e.t<15)return fin('roto');
+if(d.fin==='acuerdo')return fin(e.l<50?'riesgo':e.m>=60&&e.t>=60&&e.i>=60&&e.l>=60?'solido':'fragil');
+if(e.turno>=MAX_TURNOS)return fin('abierta');
+bloquear(false,'Es tu turno.');$('texto').focus();
+}catch(x){e.reintento=true;$('texto').value=m;bloquear(false,(x.message||'Hubo un problema de conexión.')+' Tu texto sigue en la caja para reenviarlo.');}
+}
+function pintaTiempo(){
+const W=640,H=250,L=34,R=86,T=14,B=30,s=e.series,n=Math.max(s.length-1,1),X=i=>L+(W-L-R)*i/n,Y=v=>T+(H-T-B)*(1-v/100);
+const SER=[['m','Confianza Elena','var(--elena)'],['t','Confianza Andrés','var(--andres)'],['tension','Tensión','var(--gold)']];
+let h='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Línea de tiempo de confianza y tensión por turno">';
+[0,50,100].forEach(v=>{h+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" class="rej"/><text x="'+(L-7)+'" y="'+(Y(v)+4)+'" text-anchor="end" class="eje">'+v+'</text>';});
+s.forEach((p,i)=>{if(n<=8||i%2===0)h+='<text x="'+X(i)+'" y="'+(H-9)+'" text-anchor="middle" class="eje">'+(i===0?'Inicio':'T'+i)+'</text>';});
+const fin=SER.map(([k])=>s[s.length-1][k]);
+SER.forEach(([k,nom,col],j)=>{
+h+='<path d="'+s.map((p,i)=>(i?'L':'M')+X(i)+' '+Y(p[k])).join('')+'" fill="none" stroke="'+col+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+s.forEach((p,i)=>{h+='<circle cx="'+X(i)+'" cy="'+Y(p[k])+'" r="4" fill="'+col+'" stroke="var(--panel)" stroke-width="2"><title>'+(i===0?'Inicio':'Turno '+i)+': '+nom+' '+p[k]+'</title></circle>';});
+let y=Y(fin[j]);for(let o=0;o<j;o++)if(Math.abs(Y(fin[o])-y)<13)y=Y(fin[o])+14;
+h+='<text x="'+(W-R+9)+'" y="'+(y+4)+'" class="fin">'+(['Elena','Andrés','Tensión'][j])+' '+fin[j]+'</text>';});
+h+='</svg>';
+$('tiempo').innerHTML=h;
+$('leyenda').innerHTML=SER.map(([,nom,col])=>'<span><i style="background:'+col+'"></i>'+nom+'</span>').join('');
+$('tablaTiempo').innerHTML='<tr><th>Turno</th><th>Elena</th><th>Andrés</th><th>Tensión</th></tr>'+s.map((p,i)=>'<tr><td>'+(i||'Inicio')+'</td><td>'+p.m+'</td><td>'+p.t+'</td><td>'+p.tension+'</td></tr>').join('');
+}
+async function cargarReporte(titulo){
+const c=$('reporte');c.innerHTML='<p class="note">La persona evaluadora revisa tu sesión…</p>';
+try{
+if(e.trans.length<3)throw 0;
+const r=await fetch(SUPABASE_URL+'/functions/v1/reporte',{method:'POST',headers:{'Content-Type':'application/json',apikey:SUPABASE_KEY},body:JSON.stringify({transcripcion:e.trans.join('\n'),final:titulo})});
+const d=await r.json();if(!r.ok||!Array.isArray(d.competencias))throw 0;
+c.innerHTML='';
+const res=document.createElement('p');res.className='resumen';res.textContent=d.resumen||'';c.appendChild(res);
+d.competencias.slice(0,5).forEach(k=>{const v=lim(Number(k.puntos)||0),w=document.createElement('div');w.className='comp';const t=document.createElement('div');t.className='compT';const a=document.createElement('b');a.textContent=k.nombre;const b=document.createElement('span');b.textContent=v;t.append(a,b);const bar=document.createElement('div');bar.className='track';const i=document.createElement('i');i.style.width=v+'%';bar.appendChild(i);const m=document.createElement('small');m.textContent=k.comentario||'';w.append(t,bar,m);c.appendChild(w);});
+if(Array.isArray(d.momentos)&&d.momentos.length){const h=document.createElement('b');h.className='sub';h.textContent='Momentos clave';c.appendChild(h);const u=document.createElement('ul');d.momentos.slice(0,3).forEach(x=>{const li=document.createElement('li');li.textContent=(x.tipo==='riesgo'?'△ ':'✓ ')+x.texto;u.appendChild(li);});c.appendChild(u);}
+if(d.siguiente){const h=document.createElement('p');h.className='sig';const b=document.createElement('b');b.textContent='Para tu siguiente sesión: ';h.append(b,d.siguiente);c.appendChild(h);}
+}catch{c.innerHTML='<p class="note">No se pudo generar el reporte en este momento.</p>';}
+}
+function fin(tipo){
+const f=FINALES[tipo];let p=Math.round(e.m*.2+e.t*.2+e.i*.25+e.l*.25+e.a*.1);if(tipo==='roto')p=Math.min(p,39);if(tipo==='riesgo')p=Math.min(p,59);if(tipo==='abierta')p=Math.min(p,69);
+e.p=p;$('finTitulo').textContent=f.t;$('finTexto').textContent=f.x;$('finScore').textContent=p;
+pintaTiempo();cargarReporte(f.t);
+$('guardar').hidden=false;$('estado').textContent='Usa un alias; no escribas tu nombre completo.';vista('fin');cargarTabla();reproducir(AUDIO_BASE+f.a);
+}
+const api=(q,o={})=>fetch(SUPABASE_URL+'/rest/v1/puntajes'+q,{...o,headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json',...(o.headers||{})}});
+async function cargarTabla(){
+const t=$('tabla');t.innerHTML='';
+try{const r=await api('?select=alias,puntos&order=puntos.desc&limit=5');if(!r.ok)throw 0;const d=await r.json();
+if(!d.length){t.innerHTML='<li>Sé la primera persona en la tabla.</li>';return;}
+d.forEach(x=>{const li=document.createElement('li');li.textContent=x.alias+' · '+x.puntos;t.appendChild(li);});
+}catch{t.innerHTML='<li>Tabla no disponible por ahora.</li>';$('guardar').hidden=true;}
+}
+$('guardar').onsubmit=async ev=>{ev.preventDefault();const alias=$('alias').value.trim().slice(0,20);if(!alias)return;
+try{const r=await api('',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({alias,puntos:e.p})});if(!r.ok)throw 0;$('guardar').hidden=true;$('estado').textContent='Guardado.';cargarTabla();}catch{$('estado').textContent='No se pudo guardar.';}};
+let grabador=null;
+if(!navigator.mediaDevices||!window.MediaRecorder)$('hablar').hidden=true;
+function apagarMic(){escuchando=false;$('hablar').classList.remove('on');$('hablar').textContent='🎙 Hablar';}
+async function microfono(){
+if(grabador&&grabador.state==='recording'){grabador.stop();return;}
+if(ocupado)return;
+try{
+const flujo=await navigator.mediaDevices.getUserMedia({audio:true});
+const trozos=[];const g=new MediaRecorder(flujo);grabador=g;
+g.ondataavailable=ev=>{if(ev.data.size)trozos.push(ev.data);};
+g.onstart=()=>{escuchando=true;$('hablar').classList.add('on');$('hablar').textContent='■ Terminar';$('estadoJuego').textContent='Te escuchan. Presiona Terminar al acabar.';};
+g.onstop=async()=>{flujo.getTracks().forEach(t=>t.stop());grabador=null;apagarMic();bloquear(true,'Transcribiendo tu intervención…');
+try{const b=new Blob(trozos,{type:g.mimeType||'audio/webm'});const r=await fetch(SUPABASE_URL+'/functions/v1/transcribir',{method:'POST',headers:{'Content-Type':b.type,apikey:SUPABASE_KEY},body:b});const d=await r.json();if(!r.ok||!d.texto)throw 0;$('texto').value=d.texto;bloquear(false,'');enviar();}
+catch{bloquear(false,'No pude transcribir tu voz. Intenta de nuevo o escribe.');}};
+g.start();
+}catch{$('estadoJuego').textContent='Permite el micrófono, o escribe tu intervención.';}
+}
+$('hablar').onclick=microfono;
+$('terminar').onclick=()=>{if(!ocupado&&e)fin('abierta');};
+$('usarGuion').onclick=()=>{$('texto').value=textoGuion().join(' ');$('texto').focus();};
+$('enviar').onclick=enviar;
+$('texto').addEventListener('keydown',ev=>{if(ev.key==='Enter'&&!ev.shiftKey){ev.preventDefault();enviar();}});
+$('empezar').onclick=inicio;$('otra').onclick=inicio;
+$('sonido').onclick=()=>{sonido=!sonido;if(!sonido&&audio)audio.pause();$('sonido').textContent='Sonido: '+(sonido?'sí':'no');$('sonido').setAttribute('aria-pressed',sonido);};
+</script>
+</body>
+</html>
